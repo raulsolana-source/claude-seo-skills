@@ -9,7 +9,7 @@ argument-hint: "[url]"
 license: MIT
 metadata:
   author: raulsolana-source
-  version: "2.0.0"
+  version: "2.1.0"
   category: seo
 ---
 
@@ -21,6 +21,7 @@ You are the orchestrator. Your job is NOT to audit directly. Your job is to:
 1. Spawn 10 specialist agents in parallel
 2. Wait for all results
 3. Consolidate into a single scored report + prioritized roadmap
+4. Generate a visual PDF via the report script
 
 ---
 
@@ -151,6 +152,76 @@ Brief list only.
 
 ### Re-audit Recommendation
 [X weeks/months based on severity of issues found]
+
+---
+
+## Step 3 — Generate PDF Report
+
+After consolidating all results, produce a visual PDF covering both audiences:
+- **Executive section** (pages 1-2): score gauge, category scorecard, top issues, quick wins, AI visibility summary
+- **Technical section** (pages 3+): sprint roadmap, per-category detail with exact fixes
+
+### Step 3a — Write JSON data file
+
+Write a file named `technical-seo-[domain]-[YYYY-MM-DD].json` in the current working directory with this exact structure:
+
+```json
+{
+  "domain": "example.com",
+  "url": "https://example.com",
+  "auditDate": "YYYY-MM-DD",
+  "overallScore": 72,
+  "categories": [
+    {
+      "name": "Crawlability",
+      "score": 85,
+      "weight": 15,
+      "isQuickWin": false,
+      "issues": [
+        {
+          "severity": "High",
+          "title": "Short title of the issue",
+          "description": "Brief explanation of why this matters (1-2 sentences).",
+          "fix": "Exact command, config snippet, or action to resolve it.",
+          "effort": "30 min",
+          "isQuickWin": false
+        }
+      ]
+    }
+  ],
+  "roadmap": {
+    "sprint0": [{ "category": "Security", "title": "Add HSTS header", "effort": "15 min" }],
+    "sprint1": [{ "category": "Crawlability", "title": "Fix robots.txt blocking /api", "effort": "1 h" }],
+    "sprint2": [],
+    "sprint3": [],
+    "backlog": []
+  },
+  "aiVisibility": {
+    "llmsTxt": false,
+    "blockedCrawlers": ["GPTBot"],
+    "citabilityScore": 45,
+    "topRecommendation": "Create llms.txt and unblock ChatGPT-User to enable AI search citations."
+  }
+}
+```
+
+**Category order and weights must be:**
+Crawlability (15%), Indexability (15%), Security (10%), URL Structure (8%), Mobile (10%), Core Web Vitals (12%), Structured Data (8%), JS Rendering (10%), IndexNow (2%), AI Visibility (10%).
+
+### Step 3b — Run the PDF generator
+
+Once the JSON file is written, run:
+
+```bash
+cd skills/seo-technical/scripts && npm install --silent && node generate-pdf.js ../../../technical-seo-[domain]-[date].json
+```
+
+The script will:
+1. Auto-install Puppeteer if needed
+2. Render a multi-page A4 PDF with cover, executive summary, roadmap, and per-category technical pages
+3. Save as `technical-seo-[domain]-[date].pdf` next to the JSON file
+
+Report the output PDF path to the user when done.
 
 ---
 

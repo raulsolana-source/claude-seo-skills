@@ -1,0 +1,9 @@
+{
+  "name": "seo-technical-pdf",
+  "version": "1.0.0",
+  "description": "PDF generator for Technical SEO Audit skill",
+  "private": true,
+  "dependencies": {
+    "puppeteer": "^24.0.0"
+  }
+}
