@@ -279,9 +279,9 @@ function buildHTML(data) {
   .ai-reco { flex: 1; font-size: 11px; color: #1E40AF; line-height: 1.55; }
 
   /* ── Roadmap page ── */
-  .roadmap-page { padding: 44px 48px 0; display: flex; flex-direction: column; }
-  .sprint-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 20px; flex: 1; }
-  .sprint-card { background: #F8FAFC; border-radius: 10px; padding: 14px 16px; }
+  .roadmap-page { padding: 44px 48px 0; display: flex; flex-direction: column; min-height: 1123px; break-before: page; page-break-before: always; }
+  .sprint-grid { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 20px; align-items: flex-start; }
+  .sprint-card { background: #F8FAFC; border-radius: 10px; padding: 14px 16px; width: calc(50% - 7px); }
   .sprint-label { font-size: 10px; font-weight: 700; margin-bottom: 10px; }
   .rm-item { display: flex; flex-direction: column; gap: 2px; padding: 7px 0; border-bottom: 1px solid #E2E8F0; }
   .rm-item:last-child { border-bottom: none; padding-bottom: 0; }
@@ -410,11 +410,11 @@ function buildHTML(data) {
 </div>
 
 <!-- ═══════════════════════════════════════════ PAGE 3: ROADMAP -->
-<div class="page-fixed roadmap-page">
+<div class="roadmap-page">
   <div class="section-title">Implementation Roadmap</div>
   <h2 class="page-title">Sprint Plan</h2>
   <div class="sprint-grid">${roadmapCards}</div>
-  <div class="footer-fixed" style="color:#94A3B8;border-color:#E2E8F0;background:#fff">
+  <div class="footer-flow">
     <span>${domain}</span><span>Technical SEO Audit · ${auditDate}</span><span>Confidential</span>
   </div>
 </div>
