@@ -1,5 +1,5 @@
 ---
-name: seo-technical
+name: audit-seo-tecnico
 description: >
   Technical SEO orchestrator. Spawns parallel specialist agents across 10 audit
   categories and consolidates results into a prioritized roadmap. Use when user
