@@ -4,4 +4,12 @@
 google-credentials.json
 node_modules/
 dist/
-.claude/settings.local.json
+.claude/
+preview.html
+*.pdf
+ACTION-PLAN.md
+FULL-AUDIT-REPORT.md
+skills/*/scripts/package-lock.json
+# audit output files (generated at runtime)
+technical-seo-*.json
+technical-seo-*.pdf
