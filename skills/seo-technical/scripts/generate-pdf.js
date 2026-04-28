@@ -88,7 +88,7 @@ function barRow(cat) {
 
 // Radar SVG (10 axes)
 function radarSVG(categories) {
-  const cx = 160, cy = 160, r = 130;
+  const cx = 130, cy = 130, r = 104;
   const n = categories.length;
   const angles = categories.map((_, i) => (Math.PI * 2 * i) / n - Math.PI / 2);
 
@@ -119,7 +119,7 @@ function radarSVG(categories) {
     return `<circle cx="${x}" cy="${y}" r="4" fill="${scoreColor(categories[i].score)}"/>`;
   }).join('');
 
-  return `<svg width="320" height="320" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg">
+  return `<svg width="260" height="260" viewBox="0 0 260 260" xmlns="http://www.w3.org/2000/svg">
     ${gridPaths}${axes}${dataPath}${dots}
   </svg>`;
 }
@@ -129,8 +129,8 @@ function radarSVG(categories) {
 function buildHTML(data) {
   const { domain, url, auditDate, overallScore, categories, roadmap, aiVisibility } = data;
   const overallColor = scoreColor(overallScore);
-  const topIssues = categories.flatMap(c => (c.issues || []).map(i => ({ ...i, category: c.name }))).filter(i => i.severity === 'Critical' || i.severity === 'High').slice(0, 5);
-  const quickWins  = categories.flatMap(c => (c.issues || []).filter(i => i.isQuickWin).map(i => ({ ...i, category: c.name }))).slice(0, 6);
+  const topIssues = categories.flatMap(c => (c.issues || []).map(i => ({ ...i, category: c.name }))).filter(i => i.severity === 'Critical' || i.severity === 'High').slice(0, 4);
+  const quickWins  = categories.flatMap(c => (c.issues || []).filter(i => i.isQuickWin).map(i => ({ ...i, category: c.name }))).slice(0, 4);
 
   const sprintKeys = ['sprint0', 'sprint1', 'sprint2', 'sprint3', 'backlog'];
 
@@ -150,20 +150,24 @@ function buildHTML(data) {
       </div>`).join('');
 
     return `
-      <div class="page tech-page">
-        <div class="tech-header" style="border-left:5px solid ${scoreColor(cat.score)}">
-          <div>
-            <div class="cat-tag">Category ${categories.indexOf(cat) + 1}</div>
-            <h2 class="tech-title">${cat.name}</h2>
+      <div class="tech-page">
+        <div class="tech-content">
+          <div class="tech-header" style="border-left:5px solid ${scoreColor(cat.score)}">
+            <div>
+              <div class="cat-tag">Category ${categories.indexOf(cat) + 1} of ${categories.length}</div>
+              <h2 class="tech-title">${cat.name}</h2>
+            </div>
+            <div class="tech-score-block">
+              <span class="tech-score-num" style="color:${scoreColor(cat.score)}">${cat.score}</span>
+              <span class="tech-score-label">/100</span>
+              <span class="pill" style="background:${scoreColor(cat.score)}22;color:${scoreColor(cat.score)};margin-left:6px">${scoreStatus(cat.score)}</span>
+            </div>
           </div>
-          <div class="tech-score-block">
-            <span class="tech-score-num" style="color:${scoreColor(cat.score)}">${cat.score}</span>
-            <span class="tech-score-label">/100</span>
-            <span class="pill" style="background:${scoreColor(cat.score)}22;color:${scoreColor(cat.score)}">${scoreStatus(cat.score)}</span>
-          </div>
+          <div class="issue-list">${issues.length ? issueRows : '<p class="no-issues">✅ No issues found in this category.</p>'}</div>
         </div>
-        <div class="issue-list">${issues.length ? issueRows : '<p class="no-issues">✅ No issues found in this category.</p>'}</div>
-        <div class="page-footer"><span>${domain}</span><span>Technical SEO Audit · ${auditDate}</span><span>Confidential</span></div>
+        <div class="footer-flow">
+          <span>${domain}</span><span>Technical SEO Audit · ${auditDate}</span><span>Confidential</span>
+        </div>
       </div>`;
   }).join('');
 
@@ -191,10 +195,39 @@ function buildHTML(data) {
 <meta charset="UTF-8"/>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, sans-serif; background: #fff; color: #0F172A; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, sans-serif; background: #fff; color: #0F172A; width: 794px; }
 
-  /* ── Pages ── */
-  .page { width: 794px; min-height: 1123px; position: relative; page-break-after: always; overflow: hidden; padding: 0; }
+  /* ── Fixed pages (cover, exec, roadmap): exact A4, no overflow ── */
+  .page-fixed {
+    width: 794px;
+    height: 1123px;
+    overflow: hidden;
+    break-after: page;
+    page-break-after: always;
+    position: relative;
+  }
+
+  /* ── Flow pages (tech detail): grow naturally, break cleanly ── */
+  .tech-page {
+    width: 794px;
+    break-before: page;
+    page-break-before: always;
+    padding: 44px 48px 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 1123px;
+  }
+  .tech-content { flex: 1; }
+
+  /* ── Prevent ANY block from splitting across pages ── */
+  .issue-card,
+  .sprint-card,
+  .top-issue,
+  .qw-card,
+  .ai-box,
+  .tech-header,
+  .bar-row,
+  .rm-item { break-inside: avoid; page-break-inside: avoid; }
 
   /* ── Cover ── */
   .cover { background: #0F172A; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; }
@@ -202,8 +235,8 @@ function buildHTML(data) {
   .cover-domain { font-size: 38px; font-weight: 800; color: #fff; margin-bottom: 4px; }
   .cover-url { font-size: 13px; color: #475569; margin-bottom: 40px; }
   .cover-gauge { margin-bottom: 8px; }
-  .cover-score-label { font-size: 13px; color: #64748B; margin-bottom: 48px; }
-  .cover-cats { width: 500px; display: flex; flex-direction: column; gap: 8px; }
+  .cover-score-label { font-size: 14px; font-weight: 700; margin-bottom: 48px; }
+  .cover-cats { width: 500px; display: flex; flex-direction: column; gap: 10px; }
   .cover-cat-row { display: flex; align-items: center; gap: 10px; }
   .cover-cat-name { font-size: 11px; color: #64748B; width: 130px; text-align: right; }
   .cover-cat-track { flex: 1; height: 6px; background: #1E293B; border-radius: 3px; overflow: hidden; }
@@ -212,88 +245,85 @@ function buildHTML(data) {
   .cover-footer { position: absolute; bottom: 0; left: 0; right: 0; padding: 18px 40px; background: #0B1120; display: flex; justify-content: space-between; font-size: 11px; color: #334155; }
 
   /* ── Executive ── */
-  .exec-page { padding: 52px 48px; display: flex; flex-direction: column; gap: 32px; }
-  .section-title { font-size: 11px; font-weight: 700; letter-spacing: 2px; color: #3B82F6; text-transform: uppercase; margin-bottom: 16px; }
-  h2.page-title { font-size: 26px; font-weight: 800; color: #0F172A; margin-bottom: 4px; }
-  .exec-row { display: flex; gap: 32px; align-items: flex-start; }
-  .exec-bars { flex: 1; display: flex; flex-direction: column; gap: 9px; }
+  .exec-page { padding: 44px 48px 0; display: flex; flex-direction: column; gap: 22px; }
+  .section-title { font-size: 10px; font-weight: 700; letter-spacing: 2px; color: #3B82F6; text-transform: uppercase; margin-bottom: 10px; }
+  h2.page-title { font-size: 22px; font-weight: 800; color: #0F172A; margin-bottom: 0; }
+  .exec-row { display: flex; gap: 28px; align-items: flex-start; }
+  .exec-bars { flex: 1; display: flex; flex-direction: column; gap: 8px; padding-top: 4px; }
   .bar-row { display: flex; align-items: center; gap: 8px; }
-  .bar-label { font-size: 11px; color: #475569; width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .bar-track { flex: 1; height: 8px; background: #F1F5F9; border-radius: 4px; overflow: hidden; }
-  .bar-fill { height: 100%; border-radius: 4px; transition: width .3s; }
-  .bar-num { font-size: 12px; font-weight: 700; width: 28px; text-align: right; }
-  .pill { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 99px; white-space: nowrap; }
+  .bar-label { font-size: 10px; color: #475569; width: 110px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bar-track { flex: 1; height: 7px; background: #F1F5F9; border-radius: 4px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; }
+  .bar-num { font-size: 11px; font-weight: 700; width: 26px; text-align: right; }
+  .pill { display: inline-block; font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 99px; white-space: nowrap; }
   .exec-radar { flex-shrink: 0; }
 
   /* Top issues */
-  .issues-grid { display: flex; flex-direction: column; gap: 8px; }
-  .top-issue { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; border-radius: 8px; background: #F8FAFC; border-left: 4px solid; }
-  .top-issue-cat { font-size: 10px; color: #94A3B8; margin-bottom: 2px; }
-  .top-issue-title { font-size: 13px; font-weight: 600; color: #0F172A; }
-  .top-issue-fix { font-size: 11px; color: #475569; margin-top: 3px; }
+  .issues-grid { display: flex; flex-direction: column; gap: 6px; }
+  .top-issue { display: flex; align-items: flex-start; gap: 10px; padding: 9px 12px; border-radius: 7px; background: #F8FAFC; border-left: 3px solid; }
+  .top-issue-cat { font-size: 9px; color: #94A3B8; margin-bottom: 2px; }
+  .top-issue-title { font-size: 12px; font-weight: 600; color: #0F172A; }
 
   /* Quick wins */
-  .qw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .qw-card { padding: 12px 14px; background: #F5F3FF; border-radius: 8px; border-left: 3px solid #8B5CF6; }
-  .qw-cat { font-size: 10px; color: #8B5CF6; font-weight: 600; margin-bottom: 2px; }
-  .qw-title { font-size: 12px; font-weight: 600; color: #0F172A; }
-  .qw-effort { font-size: 10px; color: #6B7280; margin-top: 4px; }
+  .qw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .qw-card { padding: 10px 12px; background: #F5F3FF; border-radius: 7px; border-left: 3px solid #8B5CF6; }
+  .qw-cat { font-size: 9px; color: #8B5CF6; font-weight: 600; margin-bottom: 2px; }
+  .qw-title { font-size: 11px; font-weight: 600; color: #0F172A; line-height: 1.4; }
+  .qw-effort { font-size: 9px; color: #6B7280; margin-top: 3px; }
 
   /* AI Visibility summary */
-  .ai-box { background: #EFF6FF; border-radius: 10px; padding: 18px 22px; display: flex; gap: 32px; }
-  .ai-metric { display: flex; flex-direction: column; align-items: center; }
-  .ai-metric-val { font-size: 28px; font-weight: 800; color: #1D4ED8; }
-  .ai-metric-label { font-size: 10px; color: #6B7280; text-align: center; margin-top: 2px; }
-  .ai-reco { flex: 1; display: flex; align-items: center; font-size: 12px; color: #1E40AF; line-height: 1.5; }
+  .ai-box { background: #EFF6FF; border-radius: 10px; padding: 14px 20px; display: flex; gap: 28px; align-items: center; }
+  .ai-metric { display: flex; flex-direction: column; align-items: center; min-width: 52px; }
+  .ai-metric-val { font-size: 26px; font-weight: 800; color: #1D4ED8; }
+  .ai-metric-label { font-size: 9px; color: #6B7280; text-align: center; margin-top: 2px; }
+  .ai-reco { flex: 1; font-size: 11px; color: #1E40AF; line-height: 1.55; }
 
   /* ── Roadmap page ── */
-  .roadmap-page { padding: 52px 48px; }
-  .sprint-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 24px; }
-  .sprint-card { background: #F8FAFC; border-radius: 10px; padding: 16px; }
-  .sprint-label { font-size: 11px; font-weight: 700; margin-bottom: 12px; }
-  .rm-item { display: flex; flex-direction: column; gap: 2px; padding: 8px 0; border-bottom: 1px solid #E2E8F0; }
-  .rm-item:last-child { border-bottom: none; }
-  .rm-cat { font-size: 9px; font-weight: 600; color: #94A3B8; text-transform: uppercase; letter-spacing: 1px; }
-  .rm-title { font-size: 12px; color: #1E293B; font-weight: 500; }
-  .rm-effort { font-size: 10px; color: #64748B; margin-top: 2px; }
+  .roadmap-page { padding: 44px 48px 0; display: flex; flex-direction: column; }
+  .sprint-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 20px; flex: 1; }
+  .sprint-card { background: #F8FAFC; border-radius: 10px; padding: 14px 16px; }
+  .sprint-label { font-size: 10px; font-weight: 700; margin-bottom: 10px; }
+  .rm-item { display: flex; flex-direction: column; gap: 2px; padding: 7px 0; border-bottom: 1px solid #E2E8F0; }
+  .rm-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .rm-cat { font-size: 8px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 1px; }
+  .rm-title { font-size: 11px; color: #1E293B; font-weight: 500; line-height: 1.4; }
+  .rm-effort { font-size: 9px; color: #64748B; margin-top: 1px; }
 
-  /* ── Technical detail pages ── */
-  .tech-page { padding: 44px 48px 60px; display: flex; flex-direction: column; }
-  .tech-header { display: flex; justify-content: space-between; align-items: flex-start; padding: 16px 20px; background: #F8FAFC; border-radius: 8px; margin-bottom: 28px; }
-  .cat-tag { font-size: 10px; font-weight: 700; color: #94A3B8; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
-  h2.tech-title { font-size: 22px; font-weight: 800; color: #0F172A; }
-  .tech-score-block { display: flex; align-items: baseline; gap: 6px; }
-  .tech-score-num { font-size: 40px; font-weight: 800; }
-  .tech-score-label { font-size: 14px; color: #94A3B8; }
-  .issue-list { display: flex; flex-direction: column; gap: 14px; flex: 1; }
-  .issue-card { padding: 14px 16px; border-radius: 8px; border: 1px solid #E2E8F0; background: #fff; }
-  .issue-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
-  .sev-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 99px; white-space: nowrap; }
-  .issue-title { font-size: 13px; font-weight: 700; color: #0F172A; }
-  .issue-desc { font-size: 12px; color: #475569; line-height: 1.6; margin-bottom: 8px; }
-  .fix-block { display: flex; align-items: flex-start; gap: 8px; background: #F1F5F9; border-radius: 6px; padding: 8px 12px; margin-bottom: 6px; }
-  .fix-label { font-size: 9px; font-weight: 800; color: #3B82F6; letter-spacing: 1px; padding-top: 2px; flex-shrink: 0; }
-  code { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace; font-size: 11px; color: #1E293B; line-height: 1.6; white-space: pre-wrap; word-break: break-all; }
-  .effort-tag { font-size: 10px; color: #64748B; }
-  .no-issues { font-size: 14px; color: #10B981; font-weight: 600; padding: 20px 0; }
+  /* ── Tech detail sections ── */
+  .tech-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; background: #F8FAFC; border-radius: 8px; margin-bottom: 22px; }
+  .cat-tag { font-size: 9px; font-weight: 700; color: #94A3B8; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 3px; }
+  h2.tech-title { font-size: 20px; font-weight: 800; color: #0F172A; }
+  .tech-score-block { display: flex; align-items: baseline; gap: 5px; }
+  .tech-score-num { font-size: 38px; font-weight: 800; line-height: 1; }
+  .tech-score-label { font-size: 13px; color: #94A3B8; }
+  .issue-list { display: flex; flex-direction: column; gap: 12px; }
+  .issue-card { padding: 13px 15px; border-radius: 8px; border: 1px solid #E2E8F0; background: #fff; }
+  .issue-header { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; flex-wrap: wrap; }
+  .sev-badge { font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 99px; white-space: nowrap; }
+  .issue-title { font-size: 12px; font-weight: 700; color: #0F172A; }
+  .issue-desc { font-size: 11px; color: #475569; line-height: 1.6; margin-bottom: 8px; }
+  .fix-block { display: flex; align-items: flex-start; gap: 8px; background: #F1F5F9; border-radius: 6px; padding: 8px 11px; margin-bottom: 6px; }
+  .fix-label { font-size: 8px; font-weight: 800; color: #3B82F6; letter-spacing: 1px; padding-top: 2px; flex-shrink: 0; }
+  code { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace; font-size: 10.5px; color: #1E293B; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+  .effort-tag { font-size: 9px; color: #64748B; }
+  .no-issues { font-size: 13px; color: #10B981; font-weight: 600; padding: 16px 0; }
 
   /* ── Footer ── */
-  .page-footer { position: absolute; bottom: 0; left: 0; right: 0; padding: 12px 48px; border-top: 1px solid #E2E8F0; display: flex; justify-content: space-between; font-size: 10px; color: #94A3B8; background: #fff; }
-
-  @media print {
-    .page { page-break-after: always; }
-  }
+  /* Fixed pages: absolute at bottom, always visible */
+  .footer-fixed { position: absolute; bottom: 0; left: 0; right: 0; padding: 11px 48px; border-top: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; font-size: 9px; }
+  /* Flow pages: normal flow, pushed to bottom via flex */
+  .footer-flow { margin-top: 32px; padding: 12px 0; border-top: 1px solid #E2E8F0; display: flex; justify-content: space-between; font-size: 9px; color: #94A3B8; }
 </style>
 </head>
 <body>
 
 <!-- ═══════════════════════════════════════════ PAGE 1: COVER -->
-<div class="page cover">
+<div class="page-fixed cover">
   <div class="cover-eyebrow">Technical SEO Audit</div>
   <div class="cover-domain">${domain}</div>
   <div class="cover-url">${url}</div>
   <div class="cover-gauge">${gauge(overallScore)}</div>
-  <div class="cover-score-label" style="color:${overallColor};font-weight:700;font-size:14px">Overall Score — ${scoreStatus(overallScore)}</div>
+  <div class="cover-score-label" style="color:${overallColor}">Overall Score — ${scoreStatus(overallScore)}</div>
 
   <div class="cover-cats">
     ${categories.map(cat => `
@@ -304,7 +334,7 @@ function buildHTML(data) {
       </div>`).join('')}
   </div>
 
-  <div class="cover-footer">
+  <div class="cover-footer" style="color:#334155">
     <span>Prepared for ${domain}</span>
     <span>Technical SEO Audit</span>
     <span>${auditDate} · Confidential</span>
@@ -312,7 +342,7 @@ function buildHTML(data) {
 </div>
 
 <!-- ═══════════════════════════════════════════ PAGE 2: EXECUTIVE SUMMARY -->
-<div class="page exec-page">
+<div class="page-fixed exec-page">
   <div>
     <div class="section-title">Executive Summary</div>
     <h2 class="page-title">Category Scorecard</h2>
@@ -336,7 +366,6 @@ function buildHTML(data) {
           <div style="flex:1">
             <div class="top-issue-cat">${issue.category} · ${issue.severity}</div>
             <div class="top-issue-title">${issue.title}</div>
-            ${issue.fix ? `<div class="top-issue-fix">→ ${issue.fix}</div>` : ''}
           </div>
         </div>`).join('')}
     </div>
@@ -344,7 +373,7 @@ function buildHTML(data) {
 
   ${quickWins.length ? `
   <div>
-    <div class="section-title">⚡ Quick Wins — High Impact, Low Effort</div>
+    <div class="section-title">⚡ Quick Wins</div>
     <div class="qw-grid">
       ${quickWins.map(qw => `
         <div class="qw-card">
@@ -375,15 +404,19 @@ function buildHTML(data) {
     </div>
   </div>` : ''}
 
-  <div class="page-footer"><span>${domain}</span><span>Technical SEO Audit · ${auditDate}</span><span>Confidential</span></div>
+  <div class="footer-fixed" style="color:#94A3B8;border-color:#E2E8F0;background:#fff">
+    <span>${domain}</span><span>Technical SEO Audit · ${auditDate}</span><span>Confidential</span>
+  </div>
 </div>
 
 <!-- ═══════════════════════════════════════════ PAGE 3: ROADMAP -->
-<div class="page roadmap-page">
+<div class="page-fixed roadmap-page">
   <div class="section-title">Implementation Roadmap</div>
   <h2 class="page-title">Sprint Plan</h2>
   <div class="sprint-grid">${roadmapCards}</div>
-  <div class="page-footer"><span>${domain}</span><span>Technical SEO Audit · ${auditDate}</span><span>Confidential</span></div>
+  <div class="footer-fixed" style="color:#94A3B8;border-color:#E2E8F0;background:#fff">
+    <span>${domain}</span><span>Technical SEO Audit · ${auditDate}</span><span>Confidential</span>
+  </div>
 </div>
 
 <!-- ═══════════════════════════════════════════ PAGES 4+: TECHNICAL DETAIL -->
