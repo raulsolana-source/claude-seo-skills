@@ -176,16 +176,20 @@ function buildHTML(data) {
     const items = (roadmap?.[key] || []);
     if (!items.length) return '';
     const color = sprintColor(key);
+    const label = sprintLabel(key);
     const rows = items.map(i => `
       <div class="rm-item">
-        <span class="rm-cat">${i.category || ''}</span>
-        <span class="rm-title">${i.title}</span>
-        ${i.effort ? `<span class="rm-effort">${i.effort}</span>` : ''}
+        <div class="rm-cat">${i.category || ''}</div>
+        <div class="rm-title">${i.title}</div>
+        ${i.effort ? `<div class="rm-effort">⏱ ${i.effort}</div>` : ''}
       </div>`).join('');
     return `
-      <div class="sprint-card" style="border-top:4px solid ${color}">
-        <div class="sprint-label" style="color:${color}">${sprintLabel(key)}</div>
-        ${rows}
+      <div class="sprint-card">
+        <div class="sprint-card-header" style="background:${color}">
+          <span class="sprint-card-label">${label}</span>
+          <span class="sprint-card-count">${items.length} item${items.length !== 1 ? 's' : ''}</span>
+        </div>
+        <div class="sprint-items">${rows}</div>
       </div>`;
   }).filter(Boolean).join('');
 
@@ -280,14 +284,22 @@ function buildHTML(data) {
 
   /* ── Roadmap page ── */
   .roadmap-page { padding: 44px 48px 0; display: flex; flex-direction: column; min-height: 1123px; break-before: page; page-break-before: always; }
-  .sprint-grid { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 20px; align-items: flex-start; }
-  .sprint-card { background: #F8FAFC; border-radius: 10px; padding: 14px 16px; width: calc(50% - 7px); }
-  .sprint-label { font-size: 10px; font-weight: 700; margin-bottom: 10px; }
-  .rm-item { display: flex; flex-direction: column; gap: 2px; padding: 7px 0; border-bottom: 1px solid #E2E8F0; }
-  .rm-item:last-child { border-bottom: none; padding-bottom: 0; }
-  .rm-cat { font-size: 8px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 1px; }
+  .sprint-list { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+  /* Each sprint block is full-width — break-inside:avoid is 100% reliable on block elements */
+  .sprint-card { border-radius: 10px; overflow: hidden; break-inside: avoid; page-break-inside: avoid; }
+  .sprint-card-header { display: flex; align-items: center; justify-content: space-between; padding: 9px 16px; }
+  .sprint-card-label { font-size: 11px; font-weight: 700; color: #fff; }
+  .sprint-card-count { font-size: 10px; color: rgba(255,255,255,0.7); font-weight: 600; }
+  /* Items inside sprint as 2-col grid for compactness */
+  .sprint-items { display: grid; grid-template-columns: 1fr 1fr; background: #F8FAFC; }
+  .rm-item { padding: 8px 16px; border-bottom: 1px solid #E2E8F0; border-right: 1px solid #E2E8F0; }
+  .rm-item:nth-child(even) { border-right: none; }
+  .rm-item:nth-last-child(-n+2) { border-bottom: none; }
+  /* If odd number of items, last one spans full width */
+  .rm-item:last-child:nth-child(odd) { grid-column: span 2; border-right: none; }
+  .rm-cat { font-size: 8px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 2px; }
   .rm-title { font-size: 11px; color: #1E293B; font-weight: 500; line-height: 1.4; }
-  .rm-effort { font-size: 9px; color: #64748B; margin-top: 1px; }
+  .rm-effort { font-size: 9px; color: #64748B; margin-top: 2px; }
 
   /* ── Tech detail sections ── */
   .tech-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; background: #F8FAFC; border-radius: 8px; margin-bottom: 22px; }
@@ -413,7 +425,7 @@ function buildHTML(data) {
 <div class="roadmap-page">
   <div class="section-title">Implementation Roadmap</div>
   <h2 class="page-title">Sprint Plan</h2>
-  <div class="sprint-grid">${roadmapCards}</div>
+  <div class="sprint-list">${roadmapCards}</div>
   <div class="footer-flow">
     <span>${domain}</span><span>Technical SEO Audit · ${auditDate}</span><span>Confidential</span>
   </div>
